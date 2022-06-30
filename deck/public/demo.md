@@ -17,22 +17,22 @@ Create apps with backends and modern frontends (SPA).
 
 ## Why Quarkus over NodeJS...
 
- - Ready to use stack with all the best libraries to build efficient services
- - Smart build system 
- - Developer Joy++ 🤙
- - Test friendly
- - Easy to deploy
- - Made for the cloud
+ - Ready to use stack with all the best libraries to build efficient services 
+ - Smart build system <!-- .element: class="fragment" data-fragment-index="1" -->
+ - Developer Joy++ 🤙 <!-- .element: class="fragment" data-fragment-index="2" -->
+ - Test friendly <!-- .element: class="fragment" data-fragment-index="3" -->
+ - Easy to deploy <!-- .element: class="fragment" data-fragment-index="4" -->
+ - Made for the cloud <!-- .element: class="fragment" data-fragment-index="5" -->
 
 ---
 ## Quinoa?
 
  - Compatible with most NodeJS built web apps
- - Live-code on the backend and frontend together
- - Integrated build/deployment with Quarkus
- - Out of the box e2e testing
-- `maven-frontend-plugin` = Do the job but Developer Joy--
- - A few others goodies
+ - Live-code on the backend and frontend together <!-- .element: class="fragment" data-fragment-index="1" -->
+ - Integrated build/deployment with Quarkus <!-- .element: class="fragment" data-fragment-index="2" -->
+ - Out of the box e2e testing <!-- .element: class="fragment" data-fragment-index="3" -->
+ - maven-frontend-plugin = Do the job but Developer Joy-- <!-- .element: class="fragment" data-fragment-index="4" -->
+ - A few others goodies <!-- .element: class="fragment" data-fragment-index="5" -->
 
 ---
 ## Build

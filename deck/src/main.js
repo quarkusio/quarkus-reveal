@@ -1,5 +1,5 @@
 import 'reveal.js/dist/reveal.css'
-import 'reveal.js/dist/theme/sky.css'
+import 'reveal.js/dist/theme/solarized.css'
 import Reveal from 'reveal.js'
 import Markdown from 'reveal.js/plugin/markdown/markdown.esm.js';
 
