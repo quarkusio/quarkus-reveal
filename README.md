@@ -11,5 +11,5 @@ The application can be packaged using:
 ```
 The application is now runnable using `java -jar target/quarkus-app/quarkus-run.jar`.
 
-The deck is in [demo.md](https://github.com/ia3andy/quinoa-demo-deck/blob/main/deck/public/demo.md)
+The deck is in [demo.md](https://github.com/ia3andy/quinoa-demo-deck/blob/main/demo.md)
 

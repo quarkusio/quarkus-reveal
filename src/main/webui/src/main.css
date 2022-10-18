@@ -1,0 +1,18 @@
+:root {
+    --r-code-font: Roboto Mono,monospace;
+    --r-heading-color: #bdb0d0;
+}
+
+.reveal em {
+    color: #92b3be;
+}
+
+code {
+    color: #77DD77;
+}
+
+.reveal pre code.hljs {
+    padding: 5px;
+    font-size: 1.2rem;
+    font-weight: 100;
+}
