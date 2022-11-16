@@ -8,4 +8,4 @@ import Markdown from 'reveal.js/plugin/markdown/markdown.esm.js';
 import HighLight from 'reveal.js/plugin/highlight/highlight.esm.js';
 
 const deck = new Reveal()
-deck.initialize({ hash: true, slideNumber: true, plugins: [ Markdown, HighLight ] })
+deck.initialize({ hash: true, slideNumber: true, transition: 'fade', plugins: [ Markdown, HighLight ] })
