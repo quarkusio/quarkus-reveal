@@ -1,0 +1,20 @@
+:root {
+    --r-background-color: #0D1C2C;
+    --r-code-font: Roboto Mono,monospace;
+    --r-heading-color: #bdb0d0;
+}
+
+.reveal em {
+    color: #92b3be;
+}
+
+code {
+    color: #77DD77;
+}
+
+.reveal pre code.hljs {
+    padding: 20px;
+    font-size: 1.2rem;
+    font-weight: 100;
+    border-radius: 10px;
+}

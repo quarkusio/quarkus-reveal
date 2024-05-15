@@ -1,0 +1,10 @@
+{
+  "catalogs": {},
+  "aliases": {
+    "quarkus-reveal": {
+      "script-ref": "QuarkusReveal.java",
+      "java-agents": []
+    }
+  },
+  "templates": {}
+}
