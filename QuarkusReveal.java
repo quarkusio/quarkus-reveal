@@ -1,7 +1,7 @@
 //usr/bin/env jbang "$0" "$@" ; exit $?
 //DEPS io.quarkus.platform:quarkus-bom:3.10.0@pom
 //DEPS io.quarkus:quarkus-rest
-//DEPS io.quarkiverse.web-bundler:quarkus-web-bundler:999-SNAPSHOT
+//DEPS io.quarkiverse.web-bundler:quarkus-web-bundler:1.5.0.CR1
 //DEPS org.mvnpm:reveal.js:5.1.0
 //JAVAC_OPTIONS -parameters
 //JAVA_OPTIONS -Djava.util.logging.manager=org.jboss.logmanager.LogManager
