@@ -112,10 +112,10 @@ public class QuarkusReveal implements Callable<Integer> {
         @Path("assets/{name}")
         public Response getAsset(@PathParam("name") String name) throws IOException {
             final java.nio.file.Path deckPath = java.nio.file.Path.of(deck).toAbsolutePath();
-            final java.nio.file.Path assets = deckPath.getParent().resolve("assets");
+            final java.nio.file.Path assets = deckPath.getParent().resolve("deck-assets");
             byte[] asset = findAsset(name, assets);
             if (asset == null)
-                asset = findAsset(name, deckPath.getParent().getParent().resolve("assets"));
+                asset = findAsset(name, deckPath.getParent().getParent().resolve("deck-assets"));
             if (asset == null) {
                 throw new IOException("Deck asset not found: " + name);
             }
