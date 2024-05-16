@@ -2,8 +2,8 @@
   "catalogs": {},
   "aliases": {
     "quarkus-reveal": {
-      "script-ref": "QuarkusReveal.java",
-      "java-agents": []
+      "description": "Develop and use your Reveal.js decks easily with Quarkus",
+      "script-ref": "QuarkusReveal.java"
     }
   },
   "templates": {}
