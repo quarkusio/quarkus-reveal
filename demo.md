@@ -1,7 +1,3 @@
-![Quarkus](/assets/quarkus-logo.png)
-
----
-
 ## Quarkus + Reveal + JBang
 
  = Awesome decks!!!

@@ -1,21 +1,26 @@
 //usr/bin/env jbang "$0" "$@" ; exit $?
 //DEPS info.picocli:picocli:4.6.3
-//DEPS io.quarkus.platform:quarkus-bom:3.10.0@pom
+//DEPS io.quarkus.platform:quarkus-bom:3.11.0.CR1@pom
 //DEPS io.quarkus:quarkus-rest
 //DEPS io.quarkiverse.web-bundler:quarkus-web-bundler:1.5.0.CR1
+//DEPS io.quarkiverse.qute.web:quarkus-qute-web
 //DEPS org.mvnpm:reveal.js:5.1.0
 //JAVAC_OPTIONS -parameters
 //JAVA_OPTIONS -Djava.util.logging.manager=org.jboss.logmanager.LogManager
-//FILES web/index.html=web/index.html
-//FILES web/app/github.css=web/app/github.css
-//FILES web/app/main.css=web/app/main.css
-//FILES web/app/main.js=web/app/main.js
+//FILES templates/=templates/**/*
+//FILES web/=web/**/*
+//FILES demo.md
+
+//Q:CONFIG quarkus.web-bundler.bundle.app=true
+//Q:CONFIG quarkus.web-bundler.bundle.theme-default=true
+//Q:CONFIG quarkus.web-bundler.bundle.theme-quarkus=true
 //Q:CONFIG quarkus.web-bundler.dependencies.compile-only=false
 //Q:CONFIG quarkus.http.port=7979
 
 import io.quarkus.runtime.Quarkus;
 import io.vertx.core.http.impl.MimeMapping;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Named;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -25,7 +30,10 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import picocli.CommandLine;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 
 
@@ -34,8 +42,11 @@ import java.util.concurrent.Callable;
         description = "Develop and use your Reveal.js decks easily with Quarkus")
 public class QuarkusReveal implements Callable<Integer> {
 
-    @CommandLine.Parameters(index = "0", description = "The greeting to print", defaultValue = "./demo.md")
+    @CommandLine.Parameters(index = "0", description = "The greeting to print", defaultValue = "deck.md")
     private String deck;
+
+    @CommandLine.Option(names = {"-t", "--theme"}, description = "The theme to use (default or quarkus)", defaultValue = "default")
+    private String theme;
 
     public static void main(String... args) {
         int exitCode = new CommandLine(new QuarkusReveal()).execute(args);
@@ -44,31 +55,56 @@ public class QuarkusReveal implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception { // your business logic goes here...
-        System.setProperty("deck", deck);
+        String resolvedDeck = deck;
         if(!Files.exists(java.nio.file.Path.of(deck))) {
-            throw new IOException("Deck file not found: " + deck);
+            if (Objects.equals(deck, "deck.md")) {
+                // Let's use the demo deck
+                resolvedDeck = "DEMO";
+            } else {
+                throw new IOException("Deck file not found: " + deck);
+            }
         }
-        System.out.println("Starting with deck: " + deck);
+        System.setProperty("deck", resolvedDeck);
+        System.setProperty("theme", "theme-" + theme);
+        System.out.println("Starting with deck: " + resolvedDeck + " and theme: " + theme);
         Quarkus.run();
         return 0;
     }
 
     @ApplicationScoped
+    @Named("restResource")
     @Path("/")
     public static class RestResource {
+
+        @ConfigProperty(name = "theme")
+        String theme;
 
         @ConfigProperty(name = "deck")
         String deck;
 
+        public String theme() {
+            return theme;
+        }
+
         @GET
-        @Path("demo.md")
+        @Path("deck.md")
         @Produces("text/markdown")
         public String getDeck() throws IOException {
-            final java.nio.file.Path demo = java.nio.file.Path.of(deck);
-            if(!Files.exists(demo)) {
-                throw new IOException("Deck file not found: " + demo);
+            if (deck.equals("DEMO")) {
+                try (InputStream demoStream = RestResource.class.getResourceAsStream("demo.md")) {
+                    if (demoStream == null) {
+                        throw new IOException("Demo deck not found");
+                    }
+                    return new String(demoStream.readAllBytes(), Charset.defaultCharset());
+                }
+            } else {
+                final java.nio.file.Path deckFile = java.nio.file.Path.of(deck);
+                if(!Files.exists(deckFile)) {
+                    throw new IOException("Deck file not found: " + deckFile);
+                }
+                return Files.readString(deckFile);
             }
-            return Files.readString(demo);
+
         }
 
         @GET

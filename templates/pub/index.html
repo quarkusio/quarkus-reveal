@@ -5,12 +5,13 @@
     <link rel="shortcut icon" type="image/png" href="./static/favicon.svg">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Demo</title>
-    {#bundle /}
+    {#bundle key="app"/}
+    {#bundle key=cdi:restResource.theme tag="style"/}
   </head>
   <body>
     <div class="reveal">
       <div class="slides">
-        <section data-markdown="demo.md" data-separator-vertical="^--"  />
+        <section data-markdown="deck.md" data-separator-vertical="^--"  />
       </div>
     </div>
   </body>

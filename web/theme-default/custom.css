@@ -1,0 +1,13 @@
+:root {
+    --r-background-color: #0D1C2C;
+    --r-code-font: Roboto Mono,monospace;
+    --r-heading-color: #bdb0d0;
+}
+
+.reveal em {
+    color: #92b3be;
+}
+
+code {
+    color: #77DD77;
+}
