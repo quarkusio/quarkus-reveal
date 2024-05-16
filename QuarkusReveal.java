@@ -16,6 +16,7 @@
 //Q:CONFIG quarkus.web-bundler.bundle.theme-quarkus=true
 //Q:CONFIG quarkus.web-bundler.dependencies.compile-only=false
 //Q:CONFIG quarkus.http.port=7979
+package ia3andy;
 
 import io.quarkus.runtime.Quarkus;
 import io.vertx.core.http.impl.MimeMapping;
@@ -91,7 +92,7 @@ public class QuarkusReveal implements Callable<Integer> {
         @Produces("text/markdown")
         public String getDeck() throws IOException {
             if (deck.equals("DEMO")) {
-                try (InputStream demoStream = RestResource.class.getResourceAsStream("demo.md")) {
+                try (InputStream demoStream = RestResource.class.getResourceAsStream("/demo.md")) {
                     if (demoStream == null) {
                         throw new IOException("Demo deck not found");
                     }
