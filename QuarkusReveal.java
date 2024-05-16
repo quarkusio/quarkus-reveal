@@ -49,6 +49,9 @@ public class QuarkusReveal implements Callable<Integer> {
     @CommandLine.Option(names = {"-t", "--theme"}, description = "The theme to use (default or quarkus)", defaultValue = "default")
     private String theme;
 
+    @CommandLine.Option(names = {"-p", "--port"}, description = "The http port", defaultValue = "7979")
+    private String port;
+
     public static void main(String... args) {
         int exitCode = new CommandLine(new QuarkusReveal()).execute(args);
         System.exit(exitCode);
@@ -67,6 +70,7 @@ public class QuarkusReveal implements Callable<Integer> {
         }
         System.setProperty("deck", resolvedDeck);
         System.setProperty("theme", "theme-" + theme);
+        System.setProperty("quarkus.http.port", port);
         System.out.println("Starting with deck: " + resolvedDeck + " and theme: " + theme);
         Quarkus.run();
         return 0;
