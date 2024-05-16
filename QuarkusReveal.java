@@ -109,7 +109,7 @@ public class QuarkusReveal implements Callable<Integer> {
         }
 
         @GET
-        @Path("assets/{name}")
+        @Path("deck-assets/{name}")
         public Response getAsset(@PathParam("name") String name) throws IOException {
             final java.nio.file.Path deckPath = java.nio.file.Path.of(deck).toAbsolutePath();
             final java.nio.file.Path assets = deckPath.getParent().resolve("deck-assets");
