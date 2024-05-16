@@ -45,6 +45,10 @@ public class QuarkusReveal implements Callable<Integer> {
     @Override
     public Integer call() throws Exception { // your business logic goes here...
         System.setProperty("deck", deck);
+        if(!Files.exists(java.nio.file.Path.of(deck))) {
+            throw new IOException("Deck file not found: " + deck);
+        }
+        System.out.println("Starting with deck: " + deck);
         Quarkus.run();
         return 0;
     }
