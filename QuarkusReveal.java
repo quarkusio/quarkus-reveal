@@ -23,7 +23,6 @@ import io.vertx.core.http.impl.MimeMapping;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Named;
 import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Response;
@@ -32,16 +31,27 @@ import picocli.CommandLine;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.Callable;
-
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 @CommandLine.Command(name = "quarkus-reveal", mixinStandardHelpOptions = true, version = "0.1",
         description = "Develop and use your Reveal.js decks easily with Quarkus")
 public class QuarkusReveal implements Callable<Integer> {
+
+    public static final FileCache FILE_CACHE = new FileCache();
 
     @CommandLine.Parameters(index = "0", description = "The greeting to print", defaultValue = "deck.md")
     private String deck;
@@ -60,7 +70,8 @@ public class QuarkusReveal implements Callable<Integer> {
     @Override
     public Integer call() throws Exception { // your business logic goes here...
         String resolvedDeck = deck;
-        if(!Files.exists(java.nio.file.Path.of(deck))) {
+        final Path deckPath = Path.of(deck);
+        if (!Files.exists(deckPath)) {
             if (Objects.equals(deck, "deck.md")) {
                 // Let's use the demo deck
                 resolvedDeck = "DEMO";
@@ -68,31 +79,44 @@ public class QuarkusReveal implements Callable<Integer> {
                 throw new IOException("Deck file not found: " + deck);
             }
         }
+        var content = FILE_CACHE.read(deckPath).contentAsString();
+        if (hasFrontMatter(content)) {
+            final var fm = parseFrontMatter(content);
+            if(fm.containsKey("theme") && theme.equals("default")) {
+                theme = fm.get("theme");
+            }
+            if(fm.containsKey("port") && port.equals("7979")) {
+                port = fm.get("port");
+            }
+        }
         System.setProperty("deck", resolvedDeck);
-        System.setProperty("theme", "theme-" + theme);
+        if (!Objects.equals(theme, "default")){
+            System.setProperty("theme", "theme-" + theme);
+        }
         System.setProperty("quarkus.http.port", port);
         System.out.println("Starting with deck: " + resolvedDeck + " and theme: " + theme);
         Quarkus.run();
         return 0;
     }
 
+
     @ApplicationScoped
     @Named("restResource")
-    @Path("/")
+    @jakarta.ws.rs.Path("/")
     public static class RestResource {
 
         @ConfigProperty(name = "theme")
-        String theme;
+        Optional<String> theme;
 
         @ConfigProperty(name = "deck")
         String deck;
 
         public String theme() {
-            return theme;
+            return theme.orElse("default");
         }
 
         @GET
-        @Path("deck.md")
+        @jakarta.ws.rs.Path("deck.md")
         @Produces("text/markdown")
         public String getDeck() throws IOException {
             if (deck.equals("DEMO")) {
@@ -104,42 +128,108 @@ public class QuarkusReveal implements Callable<Integer> {
                 }
             } else {
                 final java.nio.file.Path deckFile = java.nio.file.Path.of(deck);
-                if(!Files.exists(deckFile)) {
-                    throw new IOException("Deck file not found: " + deckFile);
-                }
-                return Files.readString(deckFile);
+                final FileCache.Result result = FILE_CACHE.read(deckFile);
+                return stripFrontMatter(result.contentAsString());
             }
 
         }
 
+
         @GET
-        @Path("deck-assets/{name}")
+        @jakarta.ws.rs.Path("deck-assets/{name}")
         public Response getAsset(@PathParam("name") String name) throws IOException {
             final java.nio.file.Path deckPath = java.nio.file.Path.of(deck).toAbsolutePath();
             final java.nio.file.Path assets = deckPath.getParent().resolve("deck-assets");
-            byte[] asset = findAsset(name, assets);
+            Path asset = findAsset(name, assets);
             if (asset == null)
                 asset = findAsset(name, deckPath.getParent().getParent().resolve("deck-assets"));
             if (asset == null) {
                 throw new IOException("Deck asset not found: " + name);
             }
             return Response.ok()
-                    .entity(asset)
+                    .entity(FILE_CACHE.read(asset).content())
                     .type(MimeMapping.getMimeTypeForFilename(name))
                     .build();
         }
 
-        private static byte[] findAsset(String name, java.nio.file.Path assets) throws IOException {
-            if(!Files.isDirectory(assets)) {
+        private static Path findAsset(String name, java.nio.file.Path assets) throws IOException {
+            if (!Files.isDirectory(assets)) {
                 return null;
             }
             final java.nio.file.Path asset = assets.resolve(name);
-            if(!Files.isRegularFile(asset)) {
+            if (!Files.isRegularFile(asset)) {
                 return null;
             }
-            return Files.readAllBytes(asset);
+            return asset;
         }
     }
 
+    public static class FileCache {
+
+
+        private final Map<Path, CachedFile> cache = new ConcurrentHashMap<>();
+
+        public Result read(final Path path) throws IOException {
+            if (!Files.exists(path)) {
+                throw new IOException("File not found: " + path);
+            }
+            var lastModified = Files.getLastModifiedTime(path).toMillis();
+            var changed = new AtomicBoolean(false);
+            var cached = cache.compute(path, (k, v) -> {
+                if (v == null || lastModified != v.lastModified()) {
+                    try {
+                        final byte[] content = Files.readAllBytes(path);
+                        changed.set(true);
+                        return new CachedFile(content, lastModified);
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+
+                }
+                return v;
+            });
+
+            return new Result(cached.content(), changed.get());
+        }
+
+        record CachedFile(byte[] content, long lastModified) {}
+        record Result(byte[] content, boolean changed) {
+
+            public String contentAsString() {
+                return new String(content(), StandardCharsets.UTF_8);
+            }
+        }
+
+    }
+
+    private static Map<String, String> parseFrontMatter(String content) {
+        Map<String, String> frontMatter = new HashMap<>();
+
+        if (hasFrontMatter(content)) {
+            int endOfFrontMatter = content.indexOf("---", 3);
+            if (endOfFrontMatter != -1) {
+                String frontMatterContent = content.substring(3, endOfFrontMatter).trim();
+
+                Pattern pattern = Pattern.compile("^(\\w+):\\s*(.*)$", Pattern.MULTILINE);
+                Matcher matcher = pattern.matcher(frontMatterContent);
+                while (matcher.find()) {
+                    frontMatter.put(matcher.group(1), matcher.group(2).trim());
+                }
+            }
+        }
+
+        return frontMatter;
+    }
+
+    private static String stripFrontMatter(String content) {
+        if (hasFrontMatter(content)) {
+            return  Pattern.compile("^---\\n.*\\n---").matcher(content).replaceAll("");
+        }
+        return content;
+    }
+
+    private static boolean hasFrontMatter(String content) {
+        return content.startsWith("---");
+    }
 
 }
