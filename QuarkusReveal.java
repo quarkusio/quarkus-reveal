@@ -14,6 +14,8 @@
 //Q:CONFIG quarkus.web-bundler.bundle.app=true
 //Q:CONFIG quarkus.web-bundler.bundle.theme-default=true
 //Q:CONFIG quarkus.web-bundler.bundle.theme-quarkus=true
+//Q:CONFIG quarkus.qute.suffixes=html,js
+//Q:CONFIG quarkus.web-bundler.bundling.external=/config.js
 //Q:CONFIG quarkus.web-bundler.dependencies.compile-only=false
 //Q:CONFIG quarkus.http.port=7979
 package ia3andy;
@@ -22,6 +24,7 @@ import io.quarkus.runtime.Quarkus;
 import io.vertx.core.http.impl.MimeMapping;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Named;
+import jakarta.inject.Singleton;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
@@ -50,8 +53,8 @@ import java.util.regex.Pattern;
 @CommandLine.Command(name = "quarkus-reveal", mixinStandardHelpOptions = true, version = "0.1",
         description = "Develop and use your Reveal.js decks easily with Quarkus")
 public class QuarkusReveal implements Callable<Integer> {
-
-    public static final FileCache FILE_CACHE = new FileCache();
+    private static final Pattern FRONTMATTER_PATTERN = Pattern.compile("^---\\n.*?\\n---", Pattern.DOTALL);
+    private static final FileCache FILE_CACHE = new FileCache();
 
     @CommandLine.Parameters(index = "0", description = "The greeting to print", defaultValue = "deck.md")
     private String deck;
@@ -88,6 +91,9 @@ public class QuarkusReveal implements Callable<Integer> {
             if(fm.containsKey("port") && port.equals("7979")) {
                 port = fm.get("port");
             }
+            setFromFM(fm, "width");
+            setFromFM(fm, "height");
+            setFromFM(fm, "margin");
         }
         System.setProperty("deck", resolvedDeck);
         if (!Objects.equals(theme, "default")){
@@ -99,8 +105,14 @@ public class QuarkusReveal implements Callable<Integer> {
         return 0;
     }
 
+    private static void setFromFM(Map<String, String> fm, String key) {
+        if(fm.containsKey(key)) {
+           System.setProperty(key, fm.get(key));
+        }
+    }
 
-    @ApplicationScoped
+
+    @Singleton
     @Named("restResource")
     @jakarta.ws.rs.Path("/")
     public static class RestResource {
@@ -110,6 +122,15 @@ public class QuarkusReveal implements Callable<Integer> {
 
         @ConfigProperty(name = "deck")
         String deck;
+
+        @ConfigProperty(name = "width", defaultValue = "960")
+        public String width;
+
+        @ConfigProperty(name = "height", defaultValue = "700")
+        public String height;
+
+        @ConfigProperty(name = "margin", defaultValue = "0.02")
+        public String margin;
 
         public String theme() {
             return theme.orElse("default");
@@ -223,13 +244,13 @@ public class QuarkusReveal implements Callable<Integer> {
 
     private static String stripFrontMatter(String content) {
         if (hasFrontMatter(content)) {
-            return  Pattern.compile("^---\\n.*\\n---").matcher(content).replaceAll("");
+            return FRONTMATTER_PATTERN.matcher(content).replaceAll("");
         }
         return content;
     }
 
     private static boolean hasFrontMatter(String content) {
-        return content.startsWith("---");
+        return FRONTMATTER_PATTERN.matcher(content).find();
     }
 
 }
