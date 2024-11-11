@@ -14,6 +14,7 @@
 //Q:CONFIG quarkus.web-bundler.bundle.app=true
 //Q:CONFIG quarkus.web-bundler.bundle.theme-default=true
 //Q:CONFIG quarkus.web-bundler.bundle.theme-quarkus=true
+//Q:CONFIG quarkus.web-bundler.bundle.theme-light=true
 //Q:CONFIG quarkus.qute.suffixes=html,js
 //Q:CONFIG quarkus.web-bundler.bundling.external=/config.js
 //Q:CONFIG quarkus.web-bundler.dependencies.compile-only=false
@@ -96,9 +97,7 @@ public class QuarkusReveal implements Callable<Integer> {
             setFromFM(fm, "margin");
         }
         System.setProperty("deck", resolvedDeck);
-        if (!Objects.equals(theme, "default")){
-            System.setProperty("theme", "theme-" + theme);
-        }
+        System.setProperty("theme", "theme-" + theme);
         System.setProperty("quarkus.http.port", port);
         System.out.println("Starting with deck: " + resolvedDeck + " and theme: " + theme);
         Quarkus.run();
@@ -145,12 +144,12 @@ public class QuarkusReveal implements Callable<Integer> {
                     if (demoStream == null) {
                         throw new IOException("Demo deck not found");
                     }
-                    return new String(demoStream.readAllBytes(), Charset.defaultCharset());
+                    return processContent(new String(demoStream.readAllBytes(), Charset.defaultCharset()));
                 }
             } else {
                 final java.nio.file.Path deckFile = java.nio.file.Path.of(deck);
                 final FileCache.Result result = FILE_CACHE.read(deckFile);
-                return stripFrontMatter(result.contentAsString());
+                return processContent(result.contentAsString());
             }
 
         }
@@ -240,6 +239,14 @@ public class QuarkusReveal implements Callable<Integer> {
         }
 
         return frontMatter;
+    }
+
+    private static String processContent(String content) {
+        return replaceFragments(stripFrontMatter(content));
+    }
+
+    private static String replaceFragments(String content) {
+        return content.replaceAll("\\[~([a-z- ]+)\\]", "&shy;<!-- .element: class=\"fragment $1\" -->").replaceAll("\\[~\\]", "&shy;<!-- .element: class=\"fragment\" -->");
     }
 
     private static String stripFrontMatter(String content) {
