@@ -1,7 +1,7 @@
 const Config = {
-    width: {cdi:restResource.width},
-    height: {cdi:restResource.height},
-    margin: {cdi:restResource.margin}
+    width: {config:width ?: "960"},
+    height: {config:height ?: "700"},
+    margin: {config:margin ?: "0.02"}
 }
 
 export default Config;
