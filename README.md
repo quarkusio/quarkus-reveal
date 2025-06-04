@@ -1,22 +1,125 @@
 # Quarkus Reveal
 
+**Quarkus Reveal** is a command-line tool for creating and presenting slides using [Reveal.js](https://revealjs.com), powered by JBang and designed for developer talks.
 
-To install `quarkus-reveal`:
-```shell
+It includes a custom **Quarkus theme**, making it ideal for presentations about or at Quarkus-related events.
+
+You write your slides in plain Markdown and present them instantly with live preview in your browser.
+
+---
+
+## 🚀 Installation
+
+To install `quarkus-reveal` via [JBang](https://jbang.dev):
+
+```bash
 jbang app install --fresh --force quarkus-reveal@ia3andy/quarkus-reveal
 ```
 
-To start working or presenting (`-t quarkus` is to use the quarkus theme):
-```shell
+---
+
+## 📽 Usage
+
+To start presenting your slides using the **Quarkus theme**:
+
+```bash
 quarkus-reveal talk.md -t quarkus
 ```
 
-```shell
-# opens deck.md in the current directory (or the DEMO deck if not found)
+This opens `talk.md` in your browser with the Quarkus-styled reveal.js theme.
+
+If no file is provided, it will look for `deck.md` in the current directory, or fall back to a demo deck:
+
+```bash
 quarkus-reveal -t quarkus
 ```
 
-Use http://localhost:7979/?print-pdf **to export a pdf**.
+---
 
+## ✨ Markdown Features
 
-Add deck assets in `deck-assets/`, they will be accessible from your deck.
+### Vertical slides
+
+Use `--` to create vertical slides (press ↓ to navigate):
+
+```markdown
+# Slide A
+
+---
+
+# Slide B
+```
+
+### Step-by-step content
+
+Use `[~]` at the beginning of a line to make items appear one by one:
+
+```markdown
+# Features
+
+[~] Fast startup  
+[~] Live reload  
+[~] Dev Services  
+```
+
+---
+
+## 🖨 Exporting to PDF
+
+After launching your deck in the browser, go to:
+
+```
+http://localhost:7979/?print-pdf
+```
+
+Then use your browser’s **Print to PDF** feature to export your slides.
+
+---
+
+## 🎨 Deck Assets
+
+Add any images, videos, or styles you want to use in your slides inside a folder named:
+
+```
+deck-assets/
+```
+
+Everything inside this folder will be accessible from your deck.
+
+---
+
+## 🧪 Example
+
+Create a simple Markdown file called `talk.md`:
+
+```markdown
+# Hello Quarkus
+
+---
+
+## Let's build modern Java apps
+
+- Supersonic
+- Subatomic
+- Developer Joy
+```
+
+Then run:
+
+```bash
+quarkus-reveal talk.md -t quarkus
+```
+
+---
+
+## 💡 Tip
+
+See all available options:
+
+```bash
+quarkus-reveal --help
+```
+
+---
+
+Made with ❤️ by [@ia3andy](https://github.com/ia3andy)
