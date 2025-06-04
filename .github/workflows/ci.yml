@@ -1,21 +1,46 @@
 ## This is basic continuous integration build for your Quarkus application.
 
-name: Quarkus Codestart CI
+name: Publish CI
 
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
 
 jobs:
-  build:
+  build-and-release:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v2
-      - name: Set up JDK 17
-        uses: actions/setup-java@v1
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
         with:
-          java-version: 17
-      - name: Build
-        run: ./mvnw verify -B
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Install JBang
+        run: |
+          curl -Ls https://sh.jbang.dev | bash -s - install
+          echo "$HOME/.jbang/bin" >> $GITHUB_PATH
+
+      - name: Generate fat JAR
+        run: jbang export fatjar --force -O dist/quarkus-reveal.jar QuarkusReveal.java
+
+      - name: Generate release version
+        id: release_version
+        run: |
+          DATE=$(date +'%Y.%m.%d')
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          VERSION="${DATE}-${SHORT_SHA}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.release_version.outputs.version }}
+          name: "Release ${{ steps.release_version.outputs.version }}"
+          files: dist/quarkus-reveal.jar
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
