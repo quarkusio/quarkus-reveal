@@ -4,9 +4,13 @@
     <meta charset="UTF-8" />
     <link rel="shortcut icon" type="image/png" href="./deck-assets/favicon.svg">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Demo</title>
+    <title>{config:title ?: "Demo"}</title>
     {#bundle key="app"/}
-    {#bundle key=cdi:restResource.theme tag="style"/}
+    {#if cdi:theme.isCustom}
+    <link rel="stylesheet" href="/theme/{cdi:theme.name}/style.css">
+    {#else}
+    {#bundle key=cdi:theme.name tag="style"/}
+    {/if}
   </head>
   <body>
     <div class="reveal">

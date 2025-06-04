@@ -21,18 +21,6 @@
 //Q:CONFIG quarkus.http.port=7979
 package ia3andy;
 
-import io.quarkus.runtime.Quarkus;
-import io.vertx.core.http.impl.MimeMapping;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Named;
-import jakarta.inject.Singleton;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.Response;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import picocli.CommandLine;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
@@ -43,27 +31,42 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.resteasy.reactive.RestPath;
 
-@CommandLine.Command(name = "quarkus-reveal", mixinStandardHelpOptions = true, version = "0.1",
-        description = "Develop and use your Reveal.js decks easily with Quarkus")
+import io.quarkus.logging.Log;
+import io.quarkus.runtime.Quarkus;
+import io.vertx.core.http.impl.MimeMapping;
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
+import picocli.CommandLine;
+
+@CommandLine.Command(name = "quarkus-reveal", mixinStandardHelpOptions = true, version = "0.1", description = "Develop and use your Reveal.js decks easily with Quarkus")
 public class QuarkusReveal implements Callable<Integer> {
     private static final Pattern FRONTMATTER_PATTERN = Pattern.compile("^---\\n.*?\\n---", Pattern.DOTALL);
     private static final FileCache FILE_CACHE = new FileCache();
 
-    @CommandLine.Parameters(index = "0", description = "The greeting to print", defaultValue = "deck.md")
+    @CommandLine.Parameters(index = "0", description = "The slides deck", defaultValue = "deck.md")
     private String deck;
 
-    @CommandLine.Option(names = {"-t", "--theme"}, description = "The theme to use (default or quarkus)", defaultValue = "default")
+    @CommandLine.Option(names = { "-t", "--theme" }, description = "The theme to use", defaultValue = "default")
     private String theme;
 
-    @CommandLine.Option(names = {"-p", "--port"}, description = "The http port", defaultValue = "7979")
+    @CommandLine.Option(names = { "--title" }, description = "The title to use", defaultValue = "Demo")
+    private String title;
+
+    @CommandLine.Option(names = { "-p", "--port" }, description = "The http port", defaultValue = "7979")
     private String port;
 
     public static void main(String... args) {
@@ -86,10 +89,13 @@ public class QuarkusReveal implements Callable<Integer> {
         var content = FILE_CACHE.read(deckPath).contentAsString();
         if (hasFrontMatter(content)) {
             final var fm = parseFrontMatter(content);
-            if(fm.containsKey("theme") && theme.equals("default")) {
+            if (fm.containsKey("theme") && theme.equals("default")) {
                 theme = fm.get("theme");
             }
-            if(fm.containsKey("port") && port.equals("7979")) {
+            if (fm.containsKey("title") && title.equals("Demo")) {
+                title = fm.get("title");
+            }
+            if (fm.containsKey("port") && port.equals("7979")) {
                 port = fm.get("port");
             }
             setFromFM(fm, "width");
@@ -97,6 +103,7 @@ public class QuarkusReveal implements Callable<Integer> {
             setFromFM(fm, "margin");
         }
         System.setProperty("deck", resolvedDeck);
+        System.setProperty("title", title);
         System.setProperty("theme", "theme-" + theme);
         System.setProperty("quarkus.http.port", port);
         System.out.println("Starting with deck: " + resolvedDeck + " and theme: " + theme);
@@ -105,35 +112,41 @@ public class QuarkusReveal implements Callable<Integer> {
     }
 
     private static void setFromFM(Map<String, String> fm, String key) {
-        if(fm.containsKey(key)) {
-           System.setProperty(key, fm.get(key));
+        if (fm.containsKey(key)) {
+            System.setProperty(key, fm.get(key));
         }
     }
 
+    @Named("theme")
+    @Singleton
+    public static class ThemeSelector {
+
+        @ConfigProperty(name = "theme")
+        String theme;
+
+        public boolean isCustom() {
+            return !isBuiltin();
+        }
+
+        public boolean isBuiltin() {
+            return switch (theme) {
+                case "theme-default", "theme-light", "theme-quarkus" -> true;
+                default -> false;
+            };
+        }
+
+        public String name() {
+            return theme;
+        }
+
+    }
 
     @Singleton
-    @Named("restResource")
     @jakarta.ws.rs.Path("/")
     public static class RestResource {
 
-        @ConfigProperty(name = "theme")
-        Optional<String> theme;
-
         @ConfigProperty(name = "deck")
         String deck;
-
-        @ConfigProperty(name = "width", defaultValue = "960")
-        public String width;
-
-        @ConfigProperty(name = "height", defaultValue = "700")
-        public String height;
-
-        @ConfigProperty(name = "margin", defaultValue = "0.02")
-        public String margin;
-
-        public String theme() {
-            return theme.orElse("default");
-        }
 
         @GET
         @jakarta.ws.rs.Path("deck.md")
@@ -154,7 +167,6 @@ public class QuarkusReveal implements Callable<Integer> {
 
         }
 
-
         @GET
         @jakarta.ws.rs.Path("deck-assets/{name}")
         public Response getAsset(@PathParam("name") String name) throws IOException {
@@ -165,6 +177,29 @@ public class QuarkusReveal implements Callable<Integer> {
                 asset = findAsset(name, deckPath.getParent().getParent().resolve("deck-assets"));
             if (asset == null) {
                 throw new IOException("Deck asset not found: " + name);
+            }
+            return Response.ok()
+                    .entity(FILE_CACHE.read(asset).content())
+                    .type(MimeMapping.getMimeTypeForFilename(name))
+                    .build();
+        }
+
+        @GET
+        @jakarta.ws.rs.Path("theme/{name}/{assetPath: .*}")
+        public Response getThemeAsset(@RestPath String name, @RestPath String assetPath) throws IOException {
+            Log.debugf("Get %s asset: %s", name, assetPath);
+            Path deckPath = Path.of(deck).toAbsolutePath();
+            Path themePath = deckPath.getParent().resolve(name);
+            if (!Files.exists(themePath)) {
+                // Also try the parent dir
+                themePath = deckPath.getParent().getParent().resolve(name);
+                if (!Files.exists(themePath)) {
+                    return Response.status(Status.NOT_FOUND).build();
+                }
+            }
+            Path asset = findAsset(assetPath, themePath);
+            if (asset == null) {
+                return Response.status(Status.NOT_FOUND).build();
             }
             return Response.ok()
                     .entity(FILE_CACHE.read(asset).content())
@@ -185,7 +220,6 @@ public class QuarkusReveal implements Callable<Integer> {
     }
 
     public static class FileCache {
-
 
         private final Map<Path, CachedFile> cache = new ConcurrentHashMap<>();
 
@@ -212,7 +246,9 @@ public class QuarkusReveal implements Callable<Integer> {
             return new Result(cached.content(), changed.get());
         }
 
-        record CachedFile(byte[] content, long lastModified) {}
+        record CachedFile(byte[] content, long lastModified) {
+        }
+
         record Result(byte[] content, boolean changed) {
 
             public String contentAsString() {
@@ -246,7 +282,8 @@ public class QuarkusReveal implements Callable<Integer> {
     }
 
     private static String replaceFragments(String content) {
-        return content.replaceAll("\\[~([a-z- ]+)\\]", "&shy;<!-- .element: class=\"fragment $1\" -->").replaceAll("\\[~\\]", "&shy;<!-- .element: class=\"fragment\" -->");
+        return content.replaceAll("\\[~([a-z- ]+)\\]", "&shy;<!-- .element: class=\"fragment $1\" -->")
+                .replaceAll("\\[~\\]", "&shy;<!-- .element: class=\"fragment\" -->");
     }
 
     private static String stripFrontMatter(String content) {
