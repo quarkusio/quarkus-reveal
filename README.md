@@ -36,6 +36,18 @@ quarkus-reveal -t quarkus
 
 ---
 
+## Themes
+
+Provided themes are `quarkus`, `light` and `default`, they can be set using `-t` or via frontmatter data in the deck file:
+```markdown
+---
+theme: light
+---
+# Slide A
+```
+
+---
+
 ## ✨ Markdown Features
 
 ### Vertical slides
