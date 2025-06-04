@@ -21,10 +21,8 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Install JBang
-        run: |
-          curl -Ls https://sh.jbang.dev | bash -s - install
-          echo "$HOME/.jbang/bin" >> $GITHUB_PATH
+      - name: Setup JBang
+        uses: jbangdev/setup-jbang@main
 
       - name: Generate fat JAR
         run: jbang export fatjar --force -O dist/quarkus-reveal.jar QuarkusReveal.java
