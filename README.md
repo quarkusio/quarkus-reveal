@@ -50,9 +50,10 @@ theme: light
 
 ## ✨ Markdown Features
 
-### Vertical slides
 
-Use `--` to create vertical slides (press ↓ to navigate):
+### Horizontal slides
+
+Use `---` to create horizontal slides (press space to navigate):
 
 ```markdown
 # Slide A
@@ -60,6 +61,20 @@ Use `--` to create vertical slides (press ↓ to navigate):
 ---
 
 # Slide B
+```
+
+### Vertical slides
+
+I use them to sepate the same topic in multiple slides.
+
+Use `--` to create vertical slides (press space to navigate):
+
+```markdown
+# Slide A 1
+
+--
+
+# Slide A 2
 ```
 
 ### Step-by-step content
