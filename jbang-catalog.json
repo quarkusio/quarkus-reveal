@@ -3,7 +3,7 @@
   "aliases": {
     "quarkus-reveal": {
       "description": "Develop and use your Reveal.js decks easily with Quarkus",
-      "script-ref": "https://github.com/ia3andy/quarkus-reveal/releases/latest/download/quarkus-reveal.jar"
+      "script-ref": "https://github.com/quarkusio/quarkus-reveal/releases/latest/download/quarkus-reveal.jar"
     }
   },
   "templates": {}
