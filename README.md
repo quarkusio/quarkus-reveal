@@ -122,6 +122,10 @@ Then run:
 quarkus-reveal talk.md -t quarkus
 ```
 
+
+Here are a few example decks I use for my own demos:
+https://github.com/ia3andy/demo-decks/
+
 ---
 
 ## 💡 Tip
