@@ -13,7 +13,7 @@ You write your slides in plain Markdown and present them instantly with live pre
 To install `quarkus-reveal` via [JBang](https://jbang.dev):
 
 ```bash
-jbang app install --fresh --force quarkus-reveal@ia3andy/quarkus-reveal
+jbang app install --fresh --force quarkus-reveal@quarkusio/quarkus-reveal
 ```
 
 ---
