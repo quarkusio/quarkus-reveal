@@ -48,6 +48,14 @@ theme: light
 
 ---
 
+### Custom themes
+
+It is also possible to specify a custom theme using `-t` or via frontmatter data in the deck file.
+In that case, `quarkus-reveal` attempts to obtain all theme assets from a directory named as the theme.
+The directory can be located in the directory where the current deck file lives, or in the parent directory.
+For example, `quarkus-reveal talk.md -t mytheme` instructs `quarkus-reveal` to load the `style.css` from the path `mytheme/style.css` relative to the current directory.
+
+
 ## ✨ Markdown Features
 
 
